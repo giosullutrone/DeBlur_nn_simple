@@ -1,144 +1,144 @@
 class DeBlurNetwork:
-    def __init__(self, model):
-        self.__model = model
+    def __init__(self, input_shape):
+        from src.Net import generate_model
+        self.__model = generate_model(input_shape=input_shape, L2=0.0)
 
     def get_model(self):
         return self.__model
 
-    def set_model(self, model):
-        self.__model = model
-
-    def train_model(self, epochs, steps_per_epoch, generator, folder_weights_save, generator_validation=None, folder_weights_load=None, do_checkpoint=True, optimizer=None, loss_function=None):
+    def train_model(self, epochs, steps_per_epoch,
+                    generator, folder_weights_save,
+                    generator_validation=None, path_weights_load=None):
         from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
-        import numpy as np
 
-        loss_function = DeBlurNetwork.loss_function if loss_function is None else loss_function
-        optimizer = DeBlurNetwork.optimizer() if optimizer is None else optimizer
-
+        ################################################################################################################
+        # Get loss, optimizer and then compile model
+        ################################################################################################################
+        loss_function = DeBlurNetwork.__loss_function
+        optimizer = DeBlurNetwork.__optimizer(lr=0.001)
         self.__model.compile(optimizer, loss=loss_function)
+        ################################################################################################################
 
-        if folder_weights_load is not None:
-            self.load_checkpoint(folder_weights_load)
+        ################################################################################################################
+        # Load previous checkpoint if needed
+        ################################################################################################################
+        if path_weights_load is not None:
+            self.load_checkpoint(path_weights_load)
+        ################################################################################################################
 
-        checkpoint = [ReduceLROnPlateau(
-            monitor="val_loss",
-            factor=0.5,
-            patience=5,
-            verbose=1,
-            mode="min",
-        )]
+        ################################################################################################################
+        # Add checkpoints and reduceLrOnPlateau
+        ################################################################################################################
+        checkpoint = [ReduceLROnPlateau(monitor="val_loss",
+                                        factor=0.5,
+                                        patience=5,
+                                        verbose=1,
+                                        mode="min"),
+                      ModelCheckpoint(folder_weights_save + "deblur.h5",
+                                      monitor="val_loss",
+                                      verbose=1,
+                                      save_best_only=True,
+                                      save_weights_only=False)
+                      ]
+        ################################################################################################################
 
-        if do_checkpoint:
-            checkpoint += [ModelCheckpoint(folder_weights_save + "deblur_checkpoint.h5", monitor="val_loss", verbose=1,
-                                           save_best_only=True, save_weights_only=False),
-                           ModelCheckpoint(folder_weights_save + "deblur.h5", monitor="val_loss", verbose=1,
-                                           save_best_only=True, save_weights_only=True)]
-
+        ################################################################################################################
+        # Get a batch of validation data if generator provided
+        ################################################################################################################
         validation_data_x = None
         validation_data_y = None
         if generator_validation is not None:
             x, y = next(generator_validation)
             validation_data_x = x
             validation_data_y = y
+        ################################################################################################################
 
-        self.__model.fit_generator(generator=generator,
-                                   steps_per_epoch=steps_per_epoch,
-                                   epochs=epochs,
-                                   callbacks=checkpoint,
-                                   validation_data=(validation_data_x, validation_data_y),
-                                   verbose=1)
+        ################################################################################################################
+        # Fit and save model
+        ################################################################################################################
+        self.__model.fit(x=generator,
+                         steps_per_epoch=steps_per_epoch,
+                         epochs=epochs,
+                         callbacks=checkpoint,
+                         validation_data=(validation_data_x, validation_data_y),
+                         verbose=1)
+        self.__model.save(filepath=folder_weights_save + "deblur.h5")
+        ################################################################################################################
 
-        self.__model.save_weights(filepath=folder_weights_save + "deblur.h5")
-        self.__model.save(filepath=folder_weights_save + "deblur_checkpoint.h5")
-
-    def load_weights(self, folder_weights_load):
-        self.__model.load_weights(folder_weights_load + "deblur.h5", by_name=False)
-
-    def load_checkpoint(self, folder_weights_load):
-        from tensorflow.keras.models import load_model
+    def load_weights(self, path_weights_load):
         try:
-            self.__model = load_model(folder_weights_load + "deblur_checkpoint.h5",
-                                      custom_objects={"loss_function": DeBlurNetwork.loss_function})
+            self.__model.load_weights(path_weights_load)
         except Exception as e:
-            #print("Could not load the weights: " + folder_weights_load + " not found, skipping...")
             print(e)
 
-    def predict_from_image_full(self, image, section_size=(416, 416)):
-        """Returns the reconstructed image from predictions"""
-        from src.AugmentedImage import AugmentedImage
+    def load_checkpoint(self, path_weights_load):
+        from tensorflow.keras.models import load_model
+        try:
+            self.__model = load_model(path_weights_load, custom_objects={"__loss_function": DeBlurNetwork.__loss_function})
+        except Exception as e:
+            print(e)
+
+    def __predict_from_image(self, image):
+        """Returns a sharp image from a blurred image"""
         import numpy as np
+        prediction = self.__model.predict(DeBlurNetwork.__pre_process(np.expand_dims(image, axis=0)))
+        return DeBlurNetwork.__post_process(prediction[0])
 
-        aug_image = AugmentedImage(image)
+    def __predict_from_images(self, images):
+        """Returns sharp images from a list of blurred images"""
+        import numpy as np
+        prediction = self.__model.predict(DeBlurNetwork.__pre_process(np.array(images)))
+        return DeBlurNetwork.__post_process(prediction)
 
-        sections = aug_image.get_sections_annotated(section_size)
+    def predict_from_image(self, image, section_size):
+        from src.AugmentedImage import AugmentedImage
+        sections_annotated = AugmentedImage.get_sections_annotated(image, section_size)
 
-        to_predict = []
-        for section in sections:
-            _, _, image_section = section
-            to_predict.append(image_section)
+        images_to_predict = []
+        for section in sections_annotated:
+            __, __, image_to_predict = section
+            images_to_predict.append(image_to_predict)
 
-        predictions = self.__model.predict(DeBlurNetwork.pre_process(np.array(to_predict)))
+        predictions = self.__predict_from_images(images_to_predict)
 
         sections_predicted = []
-        for section, prediction in zip(sections, predictions):
-            x, y, _ = section
-            image_predicted = prediction
-            sections_predicted.append((x, y, DeBlurNetwork.post_process(image_predicted)))
+        for section, prediction in zip(sections_annotated, predictions):
+            x, y, __ = section
+            sections_predicted.append((x, y, prediction))
 
-        return aug_image.image_from_sections_annotated(sections_predicted)
-
-    def predict_from_image(self, image):
-        """Returns the prediction from the image"""
-        from src.AugmentedImage import AugmentedImage
-        import numpy as np
-
-        aug_image = AugmentedImage(image)
-
-        prediction = self.__model.predict(DeBlurNetwork.pre_process(np.expand_dims(aug_image.get_image(), axis=0)))[0]
-
-        return DeBlurNetwork.post_process(prediction)
+        return AugmentedImage.image_from_sections_annotated(image, sections_predicted)
 
     @staticmethod
-    def optimizer(lr=0.001, amsgrad=False):
+    def __optimizer(lr):
         from tensorflow.keras.optimizers import Adam
-        return Adam(lr=lr, amsgrad=amsgrad)
+        return Adam(lr=lr)
 
     @staticmethod
-    def loss_function(y_true, y_pred):
-        import tensorflow.keras.backend as K
-        from tensorflow.keras.losses import mse, mae
-
-        vertical = K.constant([[0.0, 1.0, 0.0],
-                               [0.0, 1.0, 0.0],
-                               [0.0, 1.0, 0.0]])
-        horizontal = K.constant([[0.0, 0.0, 0.0],
-                                 [1.0, 1.0, 1.0],
-                                 [0.0, 0.0, 0.0]])
-        oblique_0 = K.constant([[1.0, 0.0, 0.0],
-                                [0.0, 1.0, 0.0],
-                                [0.0, 0.0, 1.0]])
-        oblique_1 = K.constant([[0.0, 0.0, 1.0],
-                                [0.0, 1.0, 0.0],
-                                [1.0, 0.0, 0.0]])
-
+    def __loss_function(y_true, y_pred):
+        from tensorflow.keras.losses import mse
         return mse(y_true, y_pred)
 
     @staticmethod
-    def pre_process(x):
+    def __pre_process(x):
         return (x / 255.0) - 0.0
 
     @staticmethod
-    def post_process(x):
+    def __post_process(x):
         return (x + 0.0) * 255.0
 
     @staticmethod
-    def generator(folder_sharp_images, folder_blurred_images, batch_size=64, section_size=(416, 416, 3), image_ext=(".jpg", ".png", ".jpeg")):
+    def get_number_of_steps(folder_images, image_exts):
+        from src.AugmentedImagesUtil import AugmentedImagesUtil
+        return len(AugmentedImagesUtil.get_images_file_names_from_folder(folder_images, image_exts))
+
+    @staticmethod
+    def generator(folder_sharp_images, folder_blurred_images, batch_size, section_size, image_exts):
         import numpy as np
         import random
         from src.AugmentedImagesUtil import AugmentedImagesUtil
         from src.AugmentedImage import AugmentedImage
 
-        image_files = AugmentedImagesUtil.get_images_file_names_from_folders(folder_sharp_images, folder_blurred_images, image_exts=image_ext)
+        image_files = AugmentedImagesUtil.get_images_file_names_from_folders(folder_sharp_images, folder_blurred_images, image_exts=image_exts)
 
         while True:
             batch_files = random.choices(image_files, k=batch_size)
@@ -155,11 +155,11 @@ class DeBlurNetwork:
                 inp = aug_blurred.get_image()
 
                 if np.isnan(np.sum(inp)) or np.isnan(np.sum(out)):
-                    print("Found an NaN in input and/or output, skipping the file...")
+                    print("Found an NaN in input and/or output, skipping file...")
                     continue
 
-                inp = DeBlurNetwork.pre_process(inp)
-                out = DeBlurNetwork.pre_process(out)
+                inp = DeBlurNetwork.__pre_process(inp)
+                out = DeBlurNetwork.__pre_process(out)
                 batch_input += [inp]
                 batch_output += [out]
 
