@@ -1,12 +1,12 @@
 class AugmentedImagesUtil:
     @staticmethod
-    def get_images_file_names_from_folder(folder_images, image_exts=(".png", ".jpg")):
+    def get_images_file_names_from_folder(folder_images, image_exts):
         """Returns the file names of images in the provided folder"""
         import os
         return [x for x in os.listdir(folder_images) if x.endswith(image_exts)]
 
     @staticmethod
-    def get_images_file_names_from_folders(folder_sharp, folder_blurred, image_exts=(".png", ".jpg"),):
+    def get_images_file_names_from_folders(folder_sharp, folder_blurred, image_exts):
         """Returns the file names of images that exists in both folders as a list of tuples"""
         import os
 
