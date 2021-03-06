@@ -1,6 +1,6 @@
 from tensorflow.python.keras.utils.data_utils import Sequence
 class Generator(Sequence):
-    def __init__(self, folder_sharp_images, folder_blurred_images, batch_size, section_size, image_exts, shuffle):
+    def __init__(self, folder_sharp_images, folder_blurred_images, batch_size, image_exts, shuffle):
         from src.AugmentedImagesUtil import AugmentedImagesUtil
         self.__folder_sharp_images = folder_sharp_images
         self.__folder_blurred_images = folder_blurred_images
@@ -8,7 +8,6 @@ class Generator(Sequence):
                                                                                     folder_blurred_images,
                                                                                     image_exts=image_exts)
         self.__batch_size = batch_size
-        self.__section_size = section_size
         self.__shuffle = shuffle
         self.on_epoch_end()
 
@@ -21,7 +20,8 @@ class Generator(Sequence):
 
     def on_epoch_end(self):
         import numpy as np
-        np.random.shuffle(self.__image_files)
+        if self.__shuffle:
+            np.random.shuffle(self.__image_files)
 
     def __data_generation(self, indices):
         import numpy as np

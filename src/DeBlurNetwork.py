@@ -6,9 +6,11 @@ class DeBlurNetwork:
     def get_model(self):
         return self.__model
 
-    def train_model(self, epochs, steps_per_epoch,
-                    generator, folder_weights_save,
-                    generator_validation=None, path_weights_load=None):
+    def train_model(self, epochs,
+                    generator,
+                    folder_weights_save,
+                    generator_validation=None,
+                    path_weights_load=None):
         from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 
         ################################################################################################################
@@ -57,7 +59,6 @@ class DeBlurNetwork:
         # Fit and save model
         ################################################################################################################
         self.__model.fit(x=generator,
-                         steps_per_epoch=steps_per_epoch,
                          epochs=epochs,
                          callbacks=checkpoint,
                          validation_data=(validation_data_x, validation_data_y),
@@ -125,42 +126,3 @@ class DeBlurNetwork:
     @staticmethod
     def post_process(x):
         return (x + 0.0) * 255.0
-
-    @staticmethod
-    def generator(folder_sharp_images, folder_blurred_images, batch_size, image_exts):
-        import numpy as np
-        import random
-        from src.AugmentedImagesUtil import AugmentedImagesUtil
-        from src.AugmentedImage import AugmentedImage
-
-        image_files = AugmentedImagesUtil.get_images_file_names_from_folders(folder_sharp_images, folder_blurred_images, image_exts=image_exts)
-
-        while True:
-            batch_files = random.choices(image_files, k=batch_size)
-            batch_input = []
-            batch_output = []
-
-            for batch_file in batch_files:
-                image_sharp_file, image_blurred_file = batch_file
-
-                aug_sharp = AugmentedImage.image_from_file(folder_sharp_images + image_sharp_file)
-                aug_blurred = AugmentedImage.image_from_file(folder_blurred_images + image_blurred_file)
-
-                out = aug_sharp
-                inp = aug_blurred
-
-                if np.isnan(np.sum(inp)) or np.isnan(np.sum(out)):
-                    print("Found an NaN in input and/or output, skipping file...")
-                    continue
-
-                inp = DeBlurNetwork.pre_process(inp)
-                out = DeBlurNetwork.pre_process(out)
-                batch_input += [inp]
-                batch_output += [out]
-
-            batch_x = np.array(batch_input)
-            batch_y = np.array(batch_output)
-
-            yield batch_x, batch_y
-
-

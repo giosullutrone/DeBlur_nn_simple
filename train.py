@@ -1,6 +1,7 @@
 if __name__ == "__main__":
     import argparse
     from src.DeBlurNetwork import DeBlurNetwork
+    from src.Generator import Generator
     from src.Util import get_fixed_path
     import tensorflow.keras.backend as K
     import os
@@ -34,23 +35,20 @@ if __name__ == "__main__":
 
     os.makedirs(save_folder, exist_ok=True)
 
-    steps_per_epoch = DeBlurNetwork.get_number_of_steps(datasets_folder + "Training/" + "Sharp/", args.batch_size, image_exts=(".jpg", ".png", ".jpeg"))
-
     net.train_model(epochs=args.epochs,
-                    steps_per_epoch=steps_per_epoch,
                     folder_weights_save=save_folder,
                     path_weights_load=args.load_path,
-                    generator=DeBlurNetwork.generator(
+                    generator=Generator(
                         folder_sharp_images=datasets_folder + "Training/" + "Sharp/",
                         folder_blurred_images=datasets_folder + "Training/" + "Blurred/",
                         batch_size=args.batch_size,
                         image_exts=(".jpg", ".png", ".jpeg"),
-                        section_size=(args.size[0], args.size[1], 3)
+                        shuffle=True
                     ),
-                    generator_validation=DeBlurNetwork.generator(
+                    generator_validation=Generator(
                         folder_sharp_images=datasets_folder + "Validation/" + "Sharp/",
                         folder_blurred_images=datasets_folder + "Validation/" + "Blurred/",
                         batch_size=args.batch_size,
                         image_exts=(".jpg", ".png", ".jpeg"),
-                        section_size=(args.size[0], args.size[1], 3)
+                        shuffle=True
                     ))
