@@ -8,7 +8,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-i", "--datasets_folder", help="Location of the \"Datasets\" folder", type=str, required=True)
+    parser.add_argument("-i", "--datasets_folder", help="Location of the datasets folders", type=str, required=True)
     parser.add_argument("-o", "--save_folder", help="Where to save the models", type=str, required=True)
 
     parser.add_argument("-l", "--load_path", help="If and from where to load the model", type=str,
