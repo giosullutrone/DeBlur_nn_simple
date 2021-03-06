@@ -17,5 +17,5 @@ class AugmentedImagesUtil:
 
         images_files_paths = []
         for image_file in image_sharp_files:
-            images_files_paths.append((image_file, image_file))
+            images_files_paths.append(image_file)
         return images_files_paths

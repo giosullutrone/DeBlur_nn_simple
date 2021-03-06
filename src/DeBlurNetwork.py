@@ -50,7 +50,7 @@ class DeBlurNetwork:
         validation_data_x = None
         validation_data_y = None
         if generator_validation is not None:
-            x, y = next(generator_validation)
+            x, y = generator_validation.__getitem__(0)
             validation_data_x = x
             validation_data_y = y
         ################################################################################################################
