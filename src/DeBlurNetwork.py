@@ -81,14 +81,14 @@ class DeBlurNetwork:
     def __predict_from_image(self, image):
         """Returns a sharp image from a blurred image"""
         import numpy as np
-        prediction = self.__model.predict(DeBlurNetwork.__pre_process(np.expand_dims(image, axis=0)))
-        return DeBlurNetwork.__post_process(prediction[0])
+        prediction = self.__model.predict(DeBlurNetwork.pre_process(np.expand_dims(image, axis=0)))
+        return DeBlurNetwork.post_process(prediction[0])
 
     def __predict_from_images(self, images):
         """Returns sharp images from a list of blurred images"""
         import numpy as np
-        prediction = self.__model.predict(DeBlurNetwork.__pre_process(np.array(images)))
-        return DeBlurNetwork.__post_process(prediction)
+        prediction = self.__model.predict(DeBlurNetwork.pre_process(np.array(images)))
+        return DeBlurNetwork.post_process(prediction)
 
     def predict_from_image(self, image, section_size):
         from src.AugmentedImage import AugmentedImage
@@ -119,20 +119,15 @@ class DeBlurNetwork:
         return mse(y_true, y_pred)
 
     @staticmethod
-    def __pre_process(x):
+    def pre_process(x):
         return (x / 255.0) - 0.0
 
     @staticmethod
-    def __post_process(x):
+    def post_process(x):
         return (x + 0.0) * 255.0
 
     @staticmethod
-    def get_number_of_steps(folder_images, batch_size, image_exts):
-        from src.AugmentedImagesUtil import AugmentedImagesUtil
-        return int(len(AugmentedImagesUtil.get_images_file_names_from_folder(folder_images, image_exts)) / batch_size)
-
-    @staticmethod
-    def generator(folder_sharp_images, folder_blurred_images, batch_size, section_size, image_exts):
+    def generator(folder_sharp_images, folder_blurred_images, batch_size, image_exts):
         import numpy as np
         import random
         from src.AugmentedImagesUtil import AugmentedImagesUtil
@@ -148,8 +143,8 @@ class DeBlurNetwork:
             for batch_file in batch_files:
                 image_sharp_file, image_blurred_file = batch_file
 
-                aug_sharp = AugmentedImage.image_from_file(folder_sharp_images + image_sharp_file, grayscale=False)
-                aug_blurred = AugmentedImage.image_from_file(folder_blurred_images + image_blurred_file, grayscale=False)
+                aug_sharp = AugmentedImage.image_from_file(folder_sharp_images + image_sharp_file)
+                aug_blurred = AugmentedImage.image_from_file(folder_blurred_images + image_blurred_file)
 
                 out = aug_sharp
                 inp = aug_blurred
@@ -158,8 +153,8 @@ class DeBlurNetwork:
                     print("Found an NaN in input and/or output, skipping file...")
                     continue
 
-                inp = DeBlurNetwork.__pre_process(inp)
-                out = DeBlurNetwork.__pre_process(out)
+                inp = DeBlurNetwork.pre_process(inp)
+                out = DeBlurNetwork.pre_process(out)
                 batch_input += [inp]
                 batch_output += [out]
 
@@ -168,4 +163,4 @@ class DeBlurNetwork:
 
             yield batch_x, batch_y
 
-    
+

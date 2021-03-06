@@ -23,13 +23,13 @@ def predict_from_image_full(self, image, section_size=(416, 416)):
         _, _, image_section = section
         to_predict.append(image_section)
 
-    predictions = self.__model.predict(DeBlurNetwork.__pre_process(np.array(to_predict)))
+    predictions = self.__model.predict(DeBlurNetwork.pre_process(np.array(to_predict)))
 
     sections_predicted = []
     for section, prediction in zip(sections, predictions):
         x, y, _ = section
         image_predicted = prediction
-        sections_predicted.append((x, y, DeBlurNetwork.__post_process(image_predicted)))
+        sections_predicted.append((x, y, DeBlurNetwork.post_process(image_predicted)))
 
     return aug_image.image_from_sections_annotated(sections_predicted)
 """
