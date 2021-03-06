@@ -127,9 +127,9 @@ class DeBlurNetwork:
         return (x + 0.0) * 255.0
 
     @staticmethod
-    def get_number_of_steps(folder_images, image_exts):
+    def get_number_of_steps(folder_images, batch_size, image_exts):
         from src.AugmentedImagesUtil import AugmentedImagesUtil
-        return len(AugmentedImagesUtil.get_images_file_names_from_folder(folder_images, image_exts))
+        return int(len(AugmentedImagesUtil.get_images_file_names_from_folder(folder_images, image_exts)) / batch_size)
 
     @staticmethod
     def generator(folder_sharp_images, folder_blurred_images, batch_size, section_size, image_exts):
@@ -148,11 +148,11 @@ class DeBlurNetwork:
             for batch_file in batch_files:
                 image_sharp_file, image_blurred_file = batch_file
 
-                aug_sharp = AugmentedImage.from_file(folder_sharp_images + image_sharp_file, grayscale=False)
-                aug_blurred = AugmentedImage.from_file(folder_blurred_images + image_blurred_file, grayscale=False)
+                aug_sharp = AugmentedImage.image_from_file(folder_sharp_images + image_sharp_file, grayscale=False)
+                aug_blurred = AugmentedImage.image_from_file(folder_blurred_images + image_blurred_file, grayscale=False)
 
-                out = aug_sharp.get_image()
-                inp = aug_blurred.get_image()
+                out = aug_sharp
+                inp = aug_blurred
 
                 if np.isnan(np.sum(inp)) or np.isnan(np.sum(out)):
                     print("Found an NaN in input and/or output, skipping file...")

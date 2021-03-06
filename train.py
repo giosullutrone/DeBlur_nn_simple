@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     os.makedirs(save_folder, exist_ok=True)
 
-    steps_per_epoch = DeBlurNetwork.get_number_of_steps(datasets_folder + "Training/" + "Sharp/", image_exts=(".jpg", ".png", ".jpeg"))
+    steps_per_epoch = DeBlurNetwork.get_number_of_steps(datasets_folder + "Training/" + "Sharp/", args.batch_size, image_exts=(".jpg", ".png", ".jpeg"))
 
     net.train_model(epochs=args.epochs,
                     steps_per_epoch=steps_per_epoch,

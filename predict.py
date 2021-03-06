@@ -1,4 +1,5 @@
 if __name__ == "__main__":
+    import os
     import argparse
     from src.AugmentedImage import AugmentedImage
     from src.AugmentedImagesUtil import AugmentedImagesUtil
@@ -18,6 +19,8 @@ if __name__ == "__main__":
 
     input_folder = get_fixed_path(args.input_folder, replace_backslash=True, add_backslash=True)
     output_folder = get_fixed_path(args.output_folder, replace_backslash=True, add_backslash=True)
+
+    os.makedirs(output_folder, exist_ok=True)
 
     ####################################################################################################################
     # DeBlur network
