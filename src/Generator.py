@@ -1,4 +1,5 @@
 from tensorflow.python.keras.utils.data_utils import Sequence
+
 class Generator(Sequence):
     def __init__(self, folder_sharp_images, folder_blurred_images, batch_size, image_exts, shuffle):
         from src.AugmentedImagesUtil import AugmentedImagesUtil
