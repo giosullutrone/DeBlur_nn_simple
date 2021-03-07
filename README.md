@@ -12,8 +12,11 @@ Simple but effective implementation of a neural network able to remove blur from
 ### Example of prediction
     python generate_dataset.py -i "G:/blurred_folder_of_cats" -o "G:/predicted_folder_of_cats" -l "G:/model_for_cats.h5" -s 224 224
 For each image inside "G:/blurred_folder_of_cats", predict a non-blurred version and place it in "G:/predicted_folder_of_cats":
-* **-l "G:/model_for_cats.h5"** => model used for the predictions
-* **-s 224 224** => each image will be divided into sections of 224 by 224 pixels
+* **-l "G:/model_for_cats.h5"** => model used for the predictions.
+* **-s 224 224** => each image will be divided into sections of 224 by 224 pixels.
+
+#### Important notes
+* Inside "./model", there is a ready-to-use model.
 
 ## Training
 ### Arguments
