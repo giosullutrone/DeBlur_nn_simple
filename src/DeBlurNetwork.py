@@ -1,10 +1,11 @@
 class DeBlurNetwork:
     def __init__(self, input_shape):
+        self.__model = None
+        self.__init_model(input_shape)
+
+    def __init_model(self, input_shape):
         from src.Net import generate_model
         self.__model = generate_model(input_shape=input_shape, L2=0.0)
-
-    def get_model(self):
-        return self.__model
 
     def train_model(self, epochs,
                     generator,
