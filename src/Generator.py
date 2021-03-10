@@ -27,12 +27,12 @@ class Generator(Sequence):
     def __data_generation(self, indices):
         import numpy as np
         from src.AugmentedImage import AugmentedImage
-        from src.DeBlurNetwork import DeBlurNetwork
+        from src.DeBlurSingleNet import DeBlurSingleNet
 
         inps = [AugmentedImage.image_from_file(self.__folder_blurred_images + self.__image_files[x]) for x in indices]
         outs = [AugmentedImage.image_from_file(self.__folder_sharp_images + self.__image_files[x]) for x in indices]
 
-        inps = DeBlurNetwork.pre_process(np.array(inps))
-        outs = DeBlurNetwork.pre_process(np.array(outs))
+        inps = DeBlurSingleNet.pre_process(np.array(inps))
+        outs = DeBlurSingleNet.pre_process(np.array(outs))
 
         return inps, outs

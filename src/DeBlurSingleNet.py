@@ -1,11 +1,16 @@
-class DeBlurNetwork:
-    def __init__(self, input_shape):
-        self.__model = None
-        self.__init_model(input_shape)
+class DeBlurSingleNet:
+    def __init__(self, input_shape, model_type):
+        self.__model = self.__init_model(input_shape, model_type)
+        self.__model.summary()
 
-    def __init_model(self, input_shape):
-        from src.Net import generate_model
-        self.__model = generate_model(input_shape=input_shape, L2=0.0)
+    @staticmethod
+    def __init_model(input_shape, model_type):
+        from src.SingleNets import generate_simple_conv_model, generate_grouped_conv_model
+
+        if model_type == "s":
+            return generate_simple_conv_model(input_shape=input_shape, L2=0.0)
+        elif model_type == "g":
+            return generate_grouped_conv_model(input_shape=input_shape, kernel_sizes=(3, 5, 7, 9), L2=0.0)
 
     def train_model(self, epochs,
                     generator,
@@ -17,8 +22,8 @@ class DeBlurNetwork:
         ################################################################################################################
         # Get loss, optimizer and then compile model
         ################################################################################################################
-        loss_function = DeBlurNetwork.__loss_function
-        optimizer = DeBlurNetwork.__optimizer(lr=0.001)
+        loss_function = DeBlurSingleNet.__loss_function
+        optimizer = DeBlurSingleNet.__optimizer(lr=0.001)
         self.__model.compile(optimizer, loss=loss_function)
         ################################################################################################################
 
@@ -76,21 +81,21 @@ class DeBlurNetwork:
     def load_checkpoint(self, path_weights_load):
         from tensorflow.keras.models import load_model
         try:
-            self.__model = load_model(path_weights_load, custom_objects={"__loss_function": DeBlurNetwork.__loss_function})
+            self.__model = load_model(path_weights_load, custom_objects={"__loss_function": DeBlurSingleNet.__loss_function})
         except Exception as e:
             print(e)
 
     def __predict_from_image(self, image):
         """Returns a sharp image from a blurred image"""
         import numpy as np
-        prediction = self.__model.predict(DeBlurNetwork.pre_process(np.expand_dims(image, axis=0)))
-        return DeBlurNetwork.post_process(prediction[0])
+        prediction = self.__model.predict(DeBlurSingleNet.pre_process(np.expand_dims(image, axis=0)))
+        return DeBlurSingleNet.post_process(prediction[0])
 
     def __predict_from_images(self, images):
         """Returns sharp images from a list of blurred images"""
         import numpy as np
-        prediction = self.__model.predict(DeBlurNetwork.pre_process(np.array(images)))
-        return DeBlurNetwork.post_process(prediction)
+        prediction = self.__model.predict(DeBlurSingleNet.pre_process(np.array(images)))
+        return DeBlurSingleNet.post_process(prediction)
 
     def predict_from_image(self, image, section_size):
         from src.AugmentedImage import AugmentedImage
