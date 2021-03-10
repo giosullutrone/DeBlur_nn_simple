@@ -1,6 +1,6 @@
 if __name__ == "__main__":
     import argparse
-    from src.DeBlurNetwork import DeBlurNetwork
+    from src.DeBlurSingleNet import DeBlurSingleNet
     from src.Generator import Generator
     from src.Util import get_fixed_path
     import tensorflow.keras.backend as K
@@ -17,6 +17,8 @@ if __name__ == "__main__":
     parser.add_argument("-e", "--epochs", help="Epochs to train the model for", type=int, required=True)
     parser.add_argument("-bs", "--batch_size", help="Batch size", type=int, required=True)
 
+    parser.add_argument("-mt", "--model_type", help="Model type to use", type=str, required=False, default="s")
+
     parser.add_argument("-s", "--size", help="Input size of each patch", nargs=2, type=int, required=False, default=(224, 224))
 
     args = parser.parse_args()
@@ -31,7 +33,7 @@ if __name__ == "__main__":
     ####################################################################################################################
     K.clear_session()
 
-    net = DeBlurNetwork(input_shape=(args.size[0], args.size[1], 3))
+    net = DeBlurSingleNet(input_shape=(args.size[0], args.size[1], 3), model_type=args.model_type)
 
     os.makedirs(save_folder, exist_ok=True)
 
