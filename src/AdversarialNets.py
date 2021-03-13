@@ -19,7 +19,7 @@ def generate_simple_conv_generator(input_shape, L2):
 
     features = __conv_block(x=inp, filters=64, kernel_size=(9, 9), strides=(1, 1), L2=L2)
     features = __conv_block(x=features, filters=32, kernel_size=(3, 3), strides=(1, 1), L2=L2)
-    features = Conv2D(3, kernel_size=(5, 5), padding="same", strides=(1, 1), activation="sigmoid", kernel_regularizer=l2(L2))(features)
+    features = Conv2D(3, kernel_size=(5, 5), padding="same", strides=(1, 1), activation="relu", kernel_regularizer=l2(L2), name="gen_out")(features)
 
     ####################################################################################################################
     out = features
@@ -28,6 +28,7 @@ def generate_simple_conv_generator(input_shape, L2):
     model = Model(
         inputs=inp,
         outputs=out,
+        name="generator"
     )
 
     return model
@@ -50,21 +51,22 @@ def generate_simple_conv_discriminator(input_shape, L2):
 
     ####################################################################################################################
     out = GlobalAveragePooling2D()(features)
-    out = Dense(1, activation="sigmoid", kernel_initializer=glorot_normal(seed=42), kernel_regularizer=l2(L2))(out)
+    out = Dense(1, activation="sigmoid", kernel_initializer=glorot_normal(seed=42), kernel_regularizer=l2(L2), name="dis_out")(out)
     ####################################################################################################################
 
     model = Model(
         inputs=inp,
         outputs=out,
+        name="discriminator"
     )
 
     return model
 
-def get_gan_from_models(generator, discriminator):
+def generate_gan_from_models(generator, discriminator):
     from tensorflow.keras.models import Model
-    gan = discriminator(generator.outputs)
+    dis_output = discriminator(generator.outputs)
 
     return Model(
         inputs=generator.inputs,
-        outputs=[generator.outputs, gan],
+        outputs=[generator.outputs, dis_output],
     )

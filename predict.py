@@ -6,6 +6,7 @@ if __name__ == "__main__":
     from src.Util import get_fixed_path
     import tensorflow.keras.backend as K
     from src.DeBlurSingleNet import DeBlurSingleNet
+    from src.DeBlurAdversarialNet import DeBlurAdversarialNet
 
     parser = argparse.ArgumentParser()
 
@@ -28,7 +29,12 @@ if __name__ == "__main__":
     # DeBlur network
     ####################################################################################################################
     K.clear_session()
-    net = DeBlurSingleNet(input_shape=(args.size[0], args.size[1], 3), model_type=args.model_type)
+
+    net = DeBlurSingleNet(input_shape=(args.size[0], args.size[1], 3), model_type=args.model_type) if args.model_type != "a" \
+        else DeBlurAdversarialNet(input_shape=(args.size[0], args.size[1], 3))
+
+    print(isinstance(net, DeBlurAdversarialNet))
+
     net.load_weights(args.load_path)
 
     image_files = AugmentedImagesUtil.get_images_file_names_from_folder(input_folder, image_exts=(".jpg", ".png", ".jpeg"))
