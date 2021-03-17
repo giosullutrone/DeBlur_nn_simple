@@ -6,6 +6,7 @@ if __name__ == "__main__":
     from src.Util import get_fixed_path
     import tensorflow.keras.backend as K
     from src.DeBlurSingleNet import DeBlurSingleNet
+    from src.DeBlurAdversarialNet import DeBlurAdversarialNet
 
     parser = argparse.ArgumentParser()
 
@@ -13,9 +14,9 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output_folder", help="Location of the \"Output\" folder", type=str, required=True)
     parser.add_argument("-l", "--load_path", help="From where to load the models' weights", type=str, required=True)
 
-    parser.add_argument("-mt", "--model_type", help="Model type to use", type=str, required=False, default="s")
+    parser.add_argument("-mt", "--model_type", help="Model type to use. Default: \"s\"", type=str, required=False, default="s")
 
-    parser.add_argument("-s", "--size", help="Input size of each patch", nargs=2, type=int, required=False, default=(224, 224))
+    parser.add_argument("-s", "--size", help="Input size of each patch. Default: 224 224", nargs=2, type=int, required=False, default=(224, 224))
 
     args = parser.parse_args()
 
@@ -28,7 +29,14 @@ if __name__ == "__main__":
     # DeBlur network
     ####################################################################################################################
     K.clear_session()
-    net = DeBlurSingleNet(input_shape=(args.size[0], args.size[1], 3), model_type=args.model_type)
+
+    net = None
+
+    if args.model_type != "a":
+        net = DeBlurSingleNet(input_shape=(args.size[0], args.size[1], 3), model_type=args.model_type)
+    else:
+        net = DeBlurAdversarialNet(input_shape=(args.size[0], args.size[1], 3))
+
     net.load_weights(args.load_path)
 
     image_files = AugmentedImagesUtil.get_images_file_names_from_folder(input_folder, image_exts=(".jpg", ".png", ".jpeg"))

@@ -69,7 +69,6 @@ class DeBlurSingleNet:
                          callbacks=checkpoint,
                          validation_data=(validation_data_x, validation_data_y),
                          verbose=1)
-        self.__model.save(filepath=folder_weights_save + "deblur.h5")
         ################################################################################################################
 
     def load_weights(self, path_weights_load):
