@@ -5,7 +5,7 @@ Simple but effective implementation of a neural network able to remove blur from
 
 # How It Works
 ## Important notes
-####Neural networks available:
+#### Neural networks available:
 | Model                                         | Command            |
 | --------------------------------------------- | ------------------ |
 | **Simple convolutional** neural network       | (--model_type "s") |
