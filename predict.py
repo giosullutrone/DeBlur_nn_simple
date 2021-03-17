@@ -14,9 +14,9 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output_folder", help="Location of the \"Output\" folder", type=str, required=True)
     parser.add_argument("-l", "--load_path", help="From where to load the models' weights", type=str, required=True)
 
-    parser.add_argument("-mt", "--model_type", help="Model type to use", type=str, required=False, default="s")
+    parser.add_argument("-mt", "--model_type", help="Model type to use. Default: \"s\"", type=str, required=False, default="s")
 
-    parser.add_argument("-s", "--size", help="Input size of each patch", nargs=2, type=int, required=False, default=(224, 224))
+    parser.add_argument("-s", "--size", help="Input size of each patch. Default: 224 224", nargs=2, type=int, required=False, default=(224, 224))
 
     args = parser.parse_args()
 
