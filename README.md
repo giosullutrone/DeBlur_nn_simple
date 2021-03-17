@@ -4,6 +4,14 @@ Simple but effective implementation of a neural network able to remove blur from
 ![](docs/Examples.png)
 
 # How It Works
+## Important notes
+####Neural networks available:
+| Model                                         | Command            |
+| --------------------------------------------- | ------------------ |
+| **Simple convolutional** neural network       | (--model_type "s") |
+| **Grouped** neural network                    | (--model_type "g") |
+| **Generative Adversarial** neural **Network** | (--model_type "a") |
+
 ## Prediction
 ### Arguments
 
@@ -38,7 +46,7 @@ For each image inside "G:/blurred_folder_of_cats", predict a non-blurred version
 * You can use this [project](https://github.com/giosullutrone/DeBlur_dataset_generator) which creates the correct folders.
 * You can create your own dataset with the same folder shape.
 
-#### Important notes
+#### Important notes on training
 If you are generating your own dataset:
 * Blurred and sharp versions of the same image should have the same name and extension.
 
