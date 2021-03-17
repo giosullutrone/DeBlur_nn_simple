@@ -34,11 +34,14 @@ class GeneratorForDiscriminator(Sequence):
         from src.AugmentedImage import AugmentedImage
         from src.DeBlurAdversarialNet import DeBlurAdversarialNet
 
-        inps = [AugmentedImage.image_from_file(self.__folder_blurred_images + self.__image_files[x]) for x in indices]
+        inps_gen = [AugmentedImage.image_from_file(self.__folder_blurred_images + self.__image_files[x]) for x in indices]
+        inps_gen = DeBlurAdversarialNet.pre_process(np.array(inps_gen))
+        outs_gen = self.__model_generator.predict(inps_gen)
+
+        inps = [AugmentedImage.image_from_file(self.__folder_sharp_images + self.__image_files[x]) for x in indices]
         inps = DeBlurAdversarialNet.pre_process(np.array(inps))
 
-        inps_gen = self.__model_generator.predict(inps)
-        inps = np.concatenate((inps, inps_gen), axis=0)
+        inps = np.concatenate((inps, outs_gen), axis=0)
 
         outs = np.array([1.0] * (len(inps) // 2) + [0.0] * (len(inps) // 2))
 

@@ -30,10 +30,12 @@ if __name__ == "__main__":
     ####################################################################################################################
     K.clear_session()
 
-    net = DeBlurSingleNet(input_shape=(args.size[0], args.size[1], 3), model_type=args.model_type) if args.model_type != "a" \
-        else DeBlurAdversarialNet(input_shape=(args.size[0], args.size[1], 3))
+    net = None
 
-    print(isinstance(net, DeBlurAdversarialNet))
+    if args.model_type != "a":
+        net = DeBlurSingleNet(input_shape=(args.size[0], args.size[1], 3), model_type=args.model_type)
+    else:
+        net = DeBlurAdversarialNet(input_shape=(args.size[0], args.size[1], 3))
 
     net.load_weights(args.load_path)
 

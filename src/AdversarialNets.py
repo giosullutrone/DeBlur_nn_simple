@@ -18,6 +18,7 @@ def generate_simple_conv_generator(input_shape, L2):
     ####################################################################################################################
 
     features = __conv_block(x=inp, filters=64, kernel_size=(9, 9), strides=(1, 1), L2=L2)
+    features = __conv_block(x=features, filters=32, kernel_size=(5, 5), strides=(1, 1), L2=L2)
     features = __conv_block(x=features, filters=32, kernel_size=(3, 3), strides=(1, 1), L2=L2)
     features = Conv2D(3, kernel_size=(5, 5), padding="same", strides=(1, 1), activation="relu", kernel_regularizer=l2(L2), name="gen_out")(features)
 
@@ -43,11 +44,11 @@ def generate_simple_conv_discriminator(input_shape, L2):
     inp = Input(input_shape)
     ####################################################################################################################
 
-    features = __conv_block(x=inp, filters=64, kernel_size=(3, 3), strides=(2, 2), L2=L2)
-    features = __conv_block(x=features, filters=64, kernel_size=(3, 3), strides=(2, 2), L2=L2)
-    features = __conv_block(x=features, filters=64, kernel_size=(3, 3), strides=(2, 2), L2=L2)
-    features = __conv_block(x=features, filters=64, kernel_size=(3, 3), strides=(2, 2), L2=L2)
-    features = __conv_block(x=features, filters=64, kernel_size=(3, 3), strides=(2, 2), L2=L2)
+    features = __conv_block(x=inp, filters=32, kernel_size=(3, 3), strides=(2, 2), L2=L2)
+    features = __conv_block(x=features, filters=32, kernel_size=(3, 3), strides=(2, 2), L2=L2)
+    features = __conv_block(x=features, filters=32, kernel_size=(3, 3), strides=(2, 2), L2=L2)
+    features = __conv_block(x=features, filters=32, kernel_size=(3, 3), strides=(2, 2), L2=L2)
+    features = __conv_block(x=features, filters=32, kernel_size=(3, 3), strides=(2, 2), L2=L2)
 
     ####################################################################################################################
     out = GlobalAveragePooling2D()(features)
@@ -64,6 +65,7 @@ def generate_simple_conv_discriminator(input_shape, L2):
 
 def generate_gan_from_models(generator, discriminator):
     from tensorflow.keras.models import Model
+
     dis_output = discriminator(generator.outputs)
 
     return Model(

@@ -21,15 +21,12 @@ class DeBlurAdversarialNet:
                     generator_gan,
                     generator_validation=None,
                     path_weights_load=None):
-        import math
-        import numpy as np
+        from tensorflow.keras.callbacks import ModelCheckpoint
 
         generator_discriminator.set_model_generator(self.__model_generator)
 
         ################################################################################################################
-        # Get loss, optimizer and then compile model
-        # Note: compile discriminator with trainable = True (to save it for training)
-        #       compile GAN with discriminator trainable = False (to save it for training)
+        # Compile models
         ################################################################################################################
         lr = 0.001
         self.__compile_models(lr=lr)
@@ -52,12 +49,15 @@ class DeBlurAdversarialNet:
             validation_data_x = x
             validation_data_y = y
         ################################################################################################################
+        checkpoint = [ModelCheckpoint(folder_weights_save + "deblur.h5",
+                                      monitor="val_gen_out_loss",
+                                      verbose=1,
+                                      save_best_only=True,
+                                      save_weights_only=False)
+                      ]
 
-        reduce_lr_plateau_patience = 20
-        reduce_lr_plateau_factor = 0.5
-
-        epochs_not_improved = 0
-        val_loss_min = math.inf
+        reduce_lr_each_n_epochs = 10
+        reduce_lr_factor = 0.5
         for i in range(epochs):
             print("Epoch: " + str(i))
 
@@ -75,32 +75,34 @@ class DeBlurAdversarialNet:
             # Fit GAN
             ############################################################################################################
             print("Training GAN...")
-            history = self.__model_gan.fit(x=generator_gan,
-                                           epochs=1,
-                                           validation_data=(validation_data_x, validation_data_y),
-                                           verbose=1)
+            self.__model_gan.fit(x=generator_gan,
+                                 callbacks=checkpoint,
+                                 epochs=1,
+                                 validation_data=(validation_data_x, validation_data_y),
+                                 verbose=1)
 
-            if np.mean(history.history["val_loss"]) < val_loss_min:
-                print("Validation loss decreased, saving weights.")
-                val_loss_min = np.mean(history.history["val_loss"])
-                self.__model_gan.save_weights(filepath=folder_weights_save + "deblur.h5")
-            else:
-                epochs_not_improved += 1
-                if epochs_not_improved >= reduce_lr_plateau_patience:
-                    print(f"Validation loss did not decrease for {epochs_not_improved} epochs, reducing lr.")
-                    lr = lr * reduce_lr_plateau_factor
-                    self.__compile_models(lr=lr)
-                    epochs_not_improved = 0
+            if i % reduce_lr_each_n_epochs == 0 and i != 0:
+                lr_old = lr
+                lr = lr * reduce_lr_factor
+                print(f"Reducing lr from {lr_old} to {lr}.")
+                self.__compile_models(lr=lr)
             ############################################################################################################
 
     def __compile_models(self, lr: float):
+        ################################################################################################################
+        # Get loss, optimizer and then compile model
+        # Note: compile discriminator with trainable = True (to save it for training)
+        #       compile GAN with discriminator trainable = False (to save it for training)
+        ################################################################################################################
         self.__set_discriminator_trainable(trainable=True)
         self.__model_discriminator.compile(DeBlurAdversarialNet.__optimizer(lr=lr),
                                            loss=DeBlurAdversarialNet.__loss_function_discriminator)
 
         self.__set_discriminator_trainable(trainable=False)
         self.__model_gan.compile(DeBlurAdversarialNet.__optimizer(lr=lr),
-                                 loss=DeBlurAdversarialNet.__loss_function_gan)
+                                 loss=[DeBlurAdversarialNet.__loss_function_generator,
+                                       DeBlurAdversarialNet.__loss_function_discriminator],
+                                 loss_weights=[1.0, 1e-3])
 
     def __set_discriminator_trainable(self, trainable: bool):
         for layer in self.__model_discriminator.layers:
@@ -153,15 +155,9 @@ class DeBlurAdversarialNet:
         return binary_crossentropy(y_true, y_pred)
 
     @staticmethod
-    def __loss_function_gan(y_true, y_pred):
-        from tensorflow.keras.losses import mse, binary_crossentropy
-        alfa = 0.1
-        return mse(y_true[0], y_pred[0]) + alfa * binary_crossentropy(y_true[1], y_pred[1])
-
-    @staticmethod
-    def __mse_function_gan(y_true, y_pred):
+    def __loss_function_generator(y_true, y_pred):
         from tensorflow.keras.losses import mse
-        return mse(y_true[0], y_pred[0])
+        return mse(y_true, y_pred)
 
     @staticmethod
     def pre_process(x):
