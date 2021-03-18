@@ -1,5 +1,5 @@
 # DeBlur Neural Network (TF 1.15)
-Simple but effective implementation of a neural network able to remove blur from images.
+Simple but effective implementation of neural networks able to remove blur from images.
 
 ![](docs/Examples.png)
 
